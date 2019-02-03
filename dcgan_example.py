@@ -21,6 +21,13 @@ class GAN():
 
         optim = Adam(0.0002, 0.5)
 
+        self.discriminator = self.build_discriminator()
+        self.discriminator.compile(loss='binary_crossentropy', optimizer=optim,
+                                metrics=['accuracy'])
+        self.generator = self.build_generator()
+
+
+
     def build_generator(self):
         model = Sequential()
 
@@ -40,3 +47,20 @@ class GAN():
         model.add(LeakyReLU())
         model.add(Activation('tanh'))
         return model
+
+    def build_discriminator(self):
+        model = Sequential()
+
+        model.add(Conv2D(4, 64))
+        model.add(LeakyReLU())
+        model.add(Conv2D(4, 64))
+        model.add(BatchNormalization())
+        model.add(LeakyReLU())
+        model.add(Conv2D(4, 64))
+        model.add(BatchNormalization())
+        model.add(LeakyReLU())
+        model.add(Conv2D(4, 64))
+        model.add(Dense(1, activation="sigmoid"))
+        return model
+
+gan = GAN()
