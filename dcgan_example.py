@@ -65,18 +65,18 @@ class GAN():
         model = Sequential()
 
 
-        model.add(Conv2D(4, 64, data_format="channels_last"))
+        model.add(Conv2D(64, 4,input_shape=self.input_shape, data_format="channels_last"))
         model.add(LeakyReLU())
-        model.add(Conv2D(4, 64, data_format="channels_last"))
+        model.add(Conv2D(64, 4, data_format="channels_last"))
         model.add(BatchNormalization())
         model.add(LeakyReLU())
-        model.add(Conv2D(4, 64, data_format="channels_last"))
+        model.add(Conv2D(64, 4, data_format="channels_last"))
         model.add(BatchNormalization())
         model.add(LeakyReLU())
-        model.add(Conv2D(4, 64, data_format="channels_last"))
+        model.add(Conv2D(64, 4, data_format="channels_last"))
         model.add(Dense(1, activation="sigmoid"))
-        # for layer in model.layers:
-        #     print(layer.input_shape,layer.output_shape)
+        for layer in model.layers:
+            print(layer.input_shape,layer.output_shape)
         return model
 
     def train(self, epochs, batch_size=128):
