@@ -6,6 +6,10 @@ from keras.datasets import fashion_mnist
 from keras.optimizers import Adam
 import keras
 import numpy as np
+import matplotlib
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
+
 
 
 class GAN():
@@ -31,8 +35,7 @@ class GAN():
         self.combined.add(self.generator)
         self.discriminator.trainable = False
         self.combined.add(self.discriminator)
-        self.combined.compile(loss='binary_crossentropy', optimizer=optim,
-                                metrics=['accuracy'])
+        self.combined.compile(loss='binary_crossentropy', optimizer=optim)
 
 
 
@@ -57,8 +60,10 @@ class GAN():
         model.add(BatchNormalization())
         model.add(LeakyReLU())
         model.add(Activation('tanh'))
-        for layer in model.layers:
-            print(layer.input_shape, layer.output_shape)
+        # print("Starting Generator layers")
+        # for layer in model.layers:
+        #     print(layer.input_shape, layer.output_shape)
+        # print("Ending Generator layers")
         return model
 
     def build_discriminator(self):
@@ -74,41 +79,74 @@ class GAN():
         model.add(BatchNormalization())
         model.add(LeakyReLU())
         model.add(Conv2D(64, 4, data_format="channels_last"))
+        model.add(Reshape((-1,)))
         model.add(Dense(1, activation="sigmoid"))
-        for layer in model.layers:
-            print(layer.input_shape,layer.output_shape)
+        # print("Starting Discriminator layers")
+        # for layer in model.layers:
+        #     print(layer.input_shape,layer.output_shape)
+        # print("Ending Discriminator layers")
         return model
 
-    def train(self, epochs, batch_size=128):
+    def train(self, epochs, batch_size=128, gen_interval=50):
         # The test sets and classifier labels don't matter
         (X_train, _), (_, _) = fashion_mnist.load_data()
 
         # Rescaling images to [-1, 1] because of tanh
         X_train = X_train / 127.5 - 1.0
 
-        idx = np.random.randint(0, X_train.shape[0], batch_size)
-        imgs = X_train[idx]
+        # Adding a 4th dimension since keras expects 4D tensors
+        X_train = np.expand_dims(X_train, axis=3)
 
-        # Generate a noise vector as input to the generator network
-        noise = np.random.normal(0, 1, (batch_size, self.latent_dim))
+        for epoch in range(epochs):
+            idx = np.random.randint(0, X_train.shape[0], batch_size)
+            imgs = X_train[idx]
 
-        fake_imgs = self.generator.predict(noise)
+            # Generate a noise vector as input to the generator network
+            noise = np.random.normal(0, 1, (batch_size, self.latent_dim))
 
-        # Generate vectors of the correct labels to train the discriminator
-        real = np.ones((batch_size, 1))
-        fake = np.zeros((batch_size, 1))
+            fake_imgs = self.generator.predict(noise)
 
-        real_loss = self.discriminator.train_on_batch(imgs, real)
-        fake_loss = self.discriminator.train_on_batch(fake_imgs, fake)
-        disc_loss = 0.5 * real_loss + fake_loss
+            # Generate vectors of the correct labels to train the discriminator
+            real = np.ones((batch_size, 1))
+            fake = np.zeros((batch_size, 1))
 
-        # Generate a new noise vector to train the generator on the combined model
-        noise = np.random.normal(0, 1, (batch_size, self.latent_dim))
-        gen_loss = self.combined.train_on_batch(noise, valid)
+            #print(self.discriminator.metrics_names)
+            #print(self.combined.metrics_names)
 
-        print("%d [Disc loss: %f, acc.: %.2f%%] [Gen loss: %f]" % (epoch, disc_loss[0], 100*disc_loss[1], gen_loss))
+            real_loss = self.discriminator.train_on_batch(imgs, real)
+            fake_loss = self.discriminator.train_on_batch(fake_imgs, fake)
+            disc_loss = 0.5 * np.add(real_loss, fake_loss)
+            #print(disc_loss)
+
+            # Generate a new noise vector to train the generator on the combined model
+            noise = np.random.normal(0, 1, (batch_size, self.latent_dim))
+            gen_loss = self.combined.train_on_batch(noise, real)
+            #print(gen_loss)
+
+            print("%d [Disc loss: %f, acc.: %.2f%%] [Gen loss: %f]" % (epoch, disc_loss[0], 100*disc_loss[1], gen_loss))
+
+            if epoch % gen_interval == 0:
+                self.gen_images(epoch)
+
+    def gen_images(self, epoch):
+        r, c = 5, 5
+        noise = np.random.normal(0, 1, (r * c, self.latent_dim))
+        gen_imgs = self.generator.predict(noise)
+
+        # Rescale images 0 - 1
+        gen_imgs = 0.5 * gen_imgs + 0.5
+
+        fig, axs = plt.subplots(r, c)
+        cnt = 0
+        for i in range(r):
+            for j in range(c):
+                axs[i,j].imshow(gen_imgs[cnt, :,:,0], cmap='gray')
+                axs[i,j].axis('off')
+                cnt += 1
+        fig.savefig("images/%d.png" % epoch)
+        plt.close()
 
 
 
 dcgan = GAN()
-dcgan.train(2)
+dcgan.train(10000)
