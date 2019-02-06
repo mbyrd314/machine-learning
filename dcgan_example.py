@@ -9,6 +9,8 @@ import numpy as np
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
+import imageio
+import os
 
 
 
@@ -146,7 +148,27 @@ class GAN():
         fig.savefig("images/%d.png" % epoch)
         plt.close()
 
+    def save_video(self):
+
+        path = 'images/' # on Mac: right click on a folder, hold down option, and click "copy as pathname"
+
+        image_folder = os.fsencode(path)
+
+        filenames = []
+
+        for file in os.listdir(image_folder):
+            filename = os.fsdecode(file)
+            if filename.endswith( ('.jpeg', '.png', '.gif') ):
+                filenames.append(path+filename)
+
+        filenames.sort() # this iteration technique has no built in order, so sort the frames
+
+        images = list(map(lambda filename: imageio.imread(filename), filenames))
+
+        imageio.mimsave(os.path.join('movie.gif'), images, duration = 0.04) # modify duration as needed
+
 
 
 dcgan = GAN()
 dcgan.train(10000)
+dcgan.save_video()
