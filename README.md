@@ -7,7 +7,9 @@ is often seen in shoes in the dataset. It occasionally changed to generating oth
 training epochs, but it never generated images that were close to as clear as those in the Fashion MNIST dataset. More work
 will have to be done to figure out how to train it effectively. I have also experimented with increasing the number of feature
 maps in the convolutional layers and changing the kernel size, but I have yet to generate samples that could be confused
-with the dataset.
+with the dataset. I have also just trained a fully-connected GAN on MNIST, but it doesn't produce anything distinguishable
+from noise. It seems that the discriminator trains too quickly and that then the generator can't learn to produce more 
+convincing images.
 
 The original plan of this was to first train a relatively simple GAN on images to get some intuition for training GANs and
 then progress to using GANs to generate natural language. Much of the existing work in this domain uses reinforcement
