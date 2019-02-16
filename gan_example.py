@@ -274,12 +274,12 @@ class GAN():
                 axs[i,j].imshow(gen_imgs[cnt, :,:,0], cmap='gray')
                 axs[i,j].axis('off')
                 cnt += 1
-        fig.savefig("images6/%d.png" % epoch)
+        fig.savefig("images7/%d.png" % epoch)
         plt.close()
 
     def save_video(self):
 
-        path = 'images2/' # on Mac: right click on a folder, hold down option, and click "copy as pathname"
+        path = 'images7/' # on Mac: right click on a folder, hold down option, and click "copy as pathname"
 
         image_folder = os.fsencode(path)
 
@@ -294,7 +294,7 @@ class GAN():
 
         images = list(map(lambda filename: imageio.imread(filename), filenames))
 
-        imageio.mimsave(os.path.join('movie6.gif'), images, duration = 0.04) # modify duration as needed
+        imageio.mimsave(os.path.join('movie7.gif'), images, duration = 0.04) # modify duration as needed
 
 
 
