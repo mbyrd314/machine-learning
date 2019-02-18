@@ -57,18 +57,18 @@ class GAN():
     def build_generator(self):
         model = Sequential()
 
-        model.add(Dense(256, input_dim=self.latent_dim))
+        model.add(Dense(512, input_dim=self.latent_dim))
         model.add(BatchNormalization())
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(rate=0.5))
-        model.add(Dense(512))
+        model.add(Dropout(rate=0.3))
+        model.add(Dense(768))
         model.add(BatchNormalization())
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(rate=0.5))
+        model.add(Dropout(rate=0.3))
         model.add(Dense(1024))
         model.add(BatchNormalization())
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(rate=0.5))
+        model.add(Dropout(rate=0.3))
         # model.add(Dense(2048))
         # model.add(BatchNormalization())
         # model.add(LeakyReLU(alpha=0.2))
@@ -134,19 +134,19 @@ class GAN():
         model.add(Dense(128,input_shape=self.input_shape ))
         model.add(BatchNormalization())
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(rate=0.5))
+        model.add(Dropout(rate=0.3))
         model.add(Dense(64))
         model.add(BatchNormalization())
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(rate=0.5))
+        model.add(Dropout(rate=0.3))
         model.add(Dense(32))
         model.add(BatchNormalization())
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(rate=0.5))
+        model.add(Dropout(rate=0.3))
         model.add(Dense(16))
         model.add(BatchNormalization())
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(rate=0.5))
+        model.add(Dropout(rate=0.3))
         # model.add(BatchNormalization())
         # model.add(LeakyReLU(alpha=0.2))
         # model.add(Dense(128))
@@ -190,10 +190,13 @@ class GAN():
 
     def train(self, epochs, batch_size=128, gen_interval=50):
         # The test sets and classifier labels don't matter
-        (X_train, _), (_, _) = mnist.load_data()
+        (X_train, Y_train), (_, _) = mnist.load_data()
 
         # Rescaling images to [-1, 1] because of tanh
         X_train = X_train / 127.5 - 1.0
+
+        # Training on only images of 3
+        X_train = X_train[Y_train==3]
 
         # Adding a 4th dimension since keras expects 4D tensors
         X_train = np.expand_dims(X_train, axis=3)
@@ -204,6 +207,7 @@ class GAN():
 
         for epoch in range(epochs):
             idx = np.random.randint(0, X_train.shape[0], batch_size)
+            #idx[0] =  1
             imgs = X_train[idx]
 
             # Adding decaying noise to the real discriminator inputs and then
@@ -233,7 +237,7 @@ class GAN():
             #print(self.discriminator.metrics_names)
             #print(self.combined.metrics_names)
 
-            if prev_disc_acc < 0.6 or count > 50 or prev_gen_loss < 0.3:
+            if prev_disc_acc < 0.6 or count > 50:
                 real_loss = self.discriminator.train_on_batch(imgs, real)
                 fake_loss = self.discriminator.train_on_batch(fake_imgs, fake)
                 disc_loss = 0.5 * np.add(real_loss, fake_loss)
@@ -274,12 +278,12 @@ class GAN():
                 axs[i,j].imshow(gen_imgs[cnt, :,:,0], cmap='gray')
                 axs[i,j].axis('off')
                 cnt += 1
-        fig.savefig("images7/%d.png" % epoch)
+        fig.savefig("images11/%d.png" % epoch)
         plt.close()
 
     def save_video(self):
 
-        path = 'images7/' # on Mac: right click on a folder, hold down option, and click "copy as pathname"
+        path = 'images11/' # on Mac: right click on a folder, hold down option, and click "copy as pathname"
 
         image_folder = os.fsencode(path)
 
@@ -294,7 +298,7 @@ class GAN():
 
         images = list(map(lambda filename: imageio.imread(filename), filenames))
 
-        imageio.mimsave(os.path.join('movie7.gif'), images, duration = 0.04) # modify duration as needed
+        imageio.mimsave(os.path.join('movie11.gif'), images, duration = 0.04) # modify duration as needed
 
 
 
