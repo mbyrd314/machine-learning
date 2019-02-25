@@ -11,7 +11,3 @@ with the dataset. I have also just trained a fully-connected GAN on MNIST, but i
 from noise. It seems that the discriminator trains too quickly and that then the generator can't learn to produce more 
 convincing images.
 
-The original plan of this was to first train a relatively simple GAN on images to get some intuition for training GANs and
-then progress to using GANs to generate natural language. Much of the existing work in this domain uses reinforcement
-learning to overcome the problem of generating discrete outputs instead of differentiable ones, so I will have to learn about
-reinforcement learning before I am able to progress to text generation.
