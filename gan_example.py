@@ -57,7 +57,11 @@ class GAN():
     def build_generator(self):
         model = Sequential()
 
-        model.add(Dense(512, input_dim=self.latent_dim))
+        model.add(Dense(256, input_dim=self.latent_dim))
+        model.add(BatchNormalization())
+        model.add(LeakyReLU(alpha=0.2))
+        model.add(Dropout(rate=0.3))
+        model.add(Dense(512))
         model.add(BatchNormalization())
         model.add(LeakyReLU(alpha=0.2))
         model.add(Dropout(rate=0.3))
@@ -69,9 +73,11 @@ class GAN():
         model.add(BatchNormalization())
         model.add(LeakyReLU(alpha=0.2))
         model.add(Dropout(rate=0.3))
-        # model.add(Dense(2048))
+        # model.add(Reshape((4, 4, -1)))
+        # model.add(Conv2DTranspose(128, 4, data_format="channels_last"))
         # model.add(BatchNormalization())
         # model.add(LeakyReLU(alpha=0.2))
+        # model.add(Reshape((-1,)))
         model.add(Dense(np.prod(self.input_shape), activation='tanh'))
         model.add(Reshape(self.input_shape))
         # model.add(Dense(1024, input_dim=self.latent_dim))
@@ -131,22 +137,22 @@ class GAN():
         # model.add(Dense(2048, input_shape=self.input_shape))
         # model.add(BatchNormalization())
         # model.add(LeakyReLU(alpha=0.2))
-        model.add(Dense(128,input_shape=self.input_shape ))
+        model.add(Dense(256,input_shape=self.input_shape ))
         model.add(BatchNormalization())
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(rate=0.3))
+        model.add(Dropout(rate=0.5))
+        model.add(Dense(128))
+        model.add(BatchNormalization())
+        model.add(LeakyReLU(alpha=0.2))
+        model.add(Dropout(rate=0.5))
         model.add(Dense(64))
         model.add(BatchNormalization())
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(rate=0.3))
+        model.add(Dropout(rate=0.5))
         model.add(Dense(32))
         model.add(BatchNormalization())
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(rate=0.3))
-        model.add(Dense(16))
-        model.add(BatchNormalization())
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(rate=0.3))
+        model.add(Dropout(rate=0.5))
         # model.add(BatchNormalization())
         # model.add(LeakyReLU(alpha=0.2))
         # model.add(Dense(128))
@@ -195,8 +201,8 @@ class GAN():
         # Rescaling images to [-1, 1] because of tanh
         X_train = X_train / 127.5 - 1.0
 
-        # Training on only images of 3
-        X_train = X_train[Y_train==3]
+        # Training on only images of 4
+        X_train = X_train[Y_train==4]
 
         # Adding a 4th dimension since keras expects 4D tensors
         X_train = np.expand_dims(X_train, axis=3)
@@ -278,12 +284,12 @@ class GAN():
                 axs[i,j].imshow(gen_imgs[cnt, :,:,0], cmap='gray')
                 axs[i,j].axis('off')
                 cnt += 1
-        fig.savefig("images11/%d.png" % epoch)
+        fig.savefig("images13/%d.png" % epoch)
         plt.close()
 
     def save_video(self):
 
-        path = 'images11/' # on Mac: right click on a folder, hold down option, and click "copy as pathname"
+        path = 'images13/' # on Mac: right click on a folder, hold down option, and click "copy as pathname"
 
         image_folder = os.fsencode(path)
 
@@ -298,10 +304,10 @@ class GAN():
 
         images = list(map(lambda filename: imageio.imread(filename), filenames))
 
-        imageio.mimsave(os.path.join('movie11.gif'), images, duration = 0.04) # modify duration as needed
+        imageio.mimsave(os.path.join('movie13.gif'), images, duration = 0.04) # modify duration as needed
 
 
 
-dcgan = GAN()
-dcgan.train(10000)
-dcgan.save_video()
+gan = GAN()
+gan.train(10000)
+gan.save_video()
