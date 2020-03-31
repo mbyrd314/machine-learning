@@ -11,3 +11,5 @@ with the dataset. I have also just trained a fully-connected GAN on MNIST, but i
 from noise. It seems that the discriminator trains too quickly and that then the generator can't learn to produce more 
 convincing images.
 
+The comma_speedchallenge directory contains code to solve Comma.ai's speed challenge to infer vehicle speeds from dash camera video frames.
+
