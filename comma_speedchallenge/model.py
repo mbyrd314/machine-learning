@@ -68,6 +68,7 @@ class VideoCarSpeedDataset(Dataset):
         #return {'image': image2-image1, 'speeds': speeds}
         return {'input': input, 'speeds': speeds.double()}
 
+
 class Net(nn.Module):
     def __init__(self, p=0.7, mean_speed=25):
         super(Net, self).__init__()
@@ -90,31 +91,6 @@ class Net(nn.Module):
         x = self.fc(x)
         return x
 
-
-def load_image_batch(batched_sample):
-    # Simple utility function used to test the custom dataloader
-    # Not needed for the actual model.
-    img1_batch = batched_sample['image1']
-    img2_batch = batched_sample['image2']
-    batch_size = len(img1_batch)
-    #print(f'Batch size: {batch_size}')
-    im_size = img1_batch.size(2)
-    #print(f'Im size: {im_size}')
-    grid_border_size = 2
-    #img1_batch = img1_batch.permute(0, 3, 1, 2)
-    #grid = utils.make_grid(img1_batch)
-    #print(f'Grid size: {grid.size()}')
-    #plt.imshow(grid)
-    #plt.imshow(grid.numpy().transpose(1,2,0))
-    for i in range(batch_size):
-        img1 = img1_batch[i]
-        img2 = img2_batch[i]
-        ax = plt.subplot(1, batch_size, i+1)
-        plt.tight_layout()
-        ax.set_title(f'Sample #{i}')
-        ax.axis('off')
-        plt.imshow(img1)
-        plt.pause(.001)
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -154,6 +130,9 @@ if __name__ == '__main__':
     for lr in lrs:
         for p in ps:
             net = Net(p, mean_speed=mean_speed)
+            # This is the best model I've trained
+            path = os.path.join(root_dir, 'models/45_800')
+            net = torch.load(path)
             net = net.double()
             print(f'Network has {count_parameters(net)} parameters')
             net = net.to(device)
@@ -168,6 +147,7 @@ if __name__ == '__main__':
                 for i, sample in enumerate(train_loader, 0):
                     input = sample['input']
                     speeds = sample['speeds']
+                    net.train()
 
                     optimizer.zero_grad()
                     input = input.to(device)
@@ -187,6 +167,7 @@ if __name__ == '__main__':
                         # Testing the model on the validation set without updating
                         # weights
                         with torch.no_grad():
+                            net.eval()
                             for val_sample in val_loader:
                                 val_input = val_sample['input']
                                 val_speeds = val_sample['speeds']
