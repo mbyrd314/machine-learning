@@ -42,30 +42,17 @@ class VideoCarSpeedDataset(Dataset):
         if self.augment_data:
             dir_idx = idx // (len(self.speeds)-1)
             idx = idx % (len(self.speeds)-1)
-            # input = self.inputs[dir_idx][idx]
             path = self.dir_dict[dir_idx]
             input_path = os.path.join(self.root_dir, f'{path}/input{idx}.png')
-            # img1_name = os.path.join(self.root_dir, f'{path}/frame{idx}.jpg')
-            # img2_name = os.path.join(self.root_dir, f'{path}/frame{idx+1}.jpg')
-            # #print(f'path: {path}, img1_name: {img1_name}, img2_name: {img2_name}')
         else:
-            # input = self.inputs[0][idx]
             input_path = os.path.join(self.root_dir, f'train_inputs/input{idx}.png')
-            # img1_name = os.path.join(self.root_dir, f'train_frames/frame{idx}.jpg')
-            # img2_name = os.path.join(self.root_dir, f'train_frames/frame{idx+1}.jpg')
         input = Image.open(input_path)
         preprocess = transforms.Compose([transforms.Resize((240, 320)), transforms.ToTensor(), transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
         input = preprocess(input)
         input = input.double()
-        #print(f'input type: {type(input)}, {input.dtype}')
         speed1 = self.speeds[idx]
         speed2 = self.speeds[idx+1]
         speeds = torch.tensor([speed1, speed2])
-        #speeds = torch.stack((speed1, speed2), 1)
-        # This returned both images when I was just taking the difference, but
-        # I should have just returned their difference
-        #return {'image1': image1, 'image2': image2, 'speed1': speed1, 'speed2': speed2}
-        #return {'image': image2-image1, 'speeds': speeds}
         return {'input': input, 'speeds': speeds.double()}
 
 
@@ -116,7 +103,7 @@ if __name__ == '__main__':
     # Batch size of 68 for ResNet50 and no validation set
     # Batch size of 60 for ResNet50 with validation set
     train_loader = DataLoader(train_set, batch_size=20, shuffle=True, num_workers=1, pin_memory=True)
-    val_loader = DataLoader(validation_set, batch_size=20, shuffle=True, num_workers=1, pin_memory=True)
+    val_loader = DataLoader(validation_set, batch_size=140, shuffle=True, num_workers=1, pin_memory=True)
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(f'device: {device}')
 
