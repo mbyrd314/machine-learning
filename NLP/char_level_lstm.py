@@ -140,7 +140,6 @@ if __name__ == '__main__':
     # Build the category_lines dictionary, a list of names per language
     category_lines = {}
     all_categories = []
-
     for filename in findFiles('data/names/*.txt'):
         category = os.path.splitext(os.path.basename(filename))[0]
         all_categories.append(category)
@@ -268,7 +267,7 @@ if __name__ == '__main__':
                     optimizer = torch.optim.SGD(model.parameters(), lr=lr)
                     criterion = nn.NLLLoss()
                     print(f'Model has {count_parameters(model)} parameters')
-                    num_epochs = 100 # Originally using iters like in the example code. Will change to epochs
+                    num_epochs = 100
                     n_iters = num_epochs * n_lines
                     h = torch.zeros(num_layers, batch_size, hidden_size)
                     c = torch.zeros(num_layers, batch_size, hidden_size)
@@ -280,7 +279,6 @@ if __name__ == '__main__':
                     running_loss = 0
 
                     torch.autograd.set_detect_anomaly(True)
-                    #for iter in range(1, n_iters + 1):
                     for epoch in range(num_epochs):
                         print(f'Training epoch {epoch+1}, lr={lr}, h_size={hidden_size}, n_layers: {num_layers}, p={p}')
                         model.train()
@@ -324,11 +322,8 @@ if __name__ == '__main__':
                         with torch.no_grad():
                             print(f'Validation epoch: {epoch+1}, lr={lr}, h_size={hidden_size}, n_layers={num_layers}, p={p}')
                             for sample in val_loader:
-                                #category, line = sample
                                 category = sample['category'][0]
                                 line= sample['line'][0]
-                            # for category in all_categories:
-                            #     for line in val_categories[category]:
                                 category_tensor = torch.tensor([all_categories.index(category)], dtype=torch.long)
                                 line_tensor = lineToTensor(line)
                                 optimizer.zero_grad()
