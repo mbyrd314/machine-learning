@@ -20,6 +20,10 @@ import string
 # Adapted from the PyTorch RNN Name Classification Tutorial
 # https://pytorch.org/tutorials/intermediate/char_rnn_classification_tutorial.html
 
+# Custom LSTM network that routes the output through a dropout layer followed by
+# a linear layer to make it the same size as the number of output categories. This
+# is followed by a softmax layer. This output is a vector of outputs for each input
+# in the sequence. Only the last output is returned, along with the h and c states.
 class myLSTM(nn.Module):
     def __init__(self, output_size, input_size, hidden_size, num_layers, dropout=0):
         super(myLSTM, self).__init__()
@@ -31,19 +35,14 @@ class myLSTM(nn.Module):
 
     def forward(self, input, hc):
         L = len(input)
-        #print(f'L: {L}')
         h, c = hc
         output, (h,c) = self.LSTM(input, (h,c))
         output = self.dropout(output)
-        #print(f'output.shape: {output.shape}')
-        #print(f'h.shape: {h.shape}')
-        #print(f'c.shape: {c.shape}')
-        #output = self.fc(output.view(L, -1))
         output = self.fc(output.view(L, -1))
-        #print(f'output.shape: {output.shape}')
         output = self.softmax(output)
         return output[-1].view(1,-1), (h,c)
 
+# Custom dataset class. Returns the category and sample for the specific index
 class CharLevelNameDataset(Dataset):
     def __init__(self, x, y):
         self.categories = y
@@ -248,12 +247,12 @@ if __name__ == '__main__':
     plot_every = 100
     print(f'n_categories: {n_categories}')
 
-    lrs = [3e-2, 3e-1]
-    ps = [0.3, 0.5]
+    lrs = [3e-2]
+    ps = [0.5, 0.7, 0.9]
     # hidden_size<=256 and num_layers<=2 works well on name language classification
     # Increasing these numbers prevents the network from learning
     # In certain configurations, it seems to always guess the same language
-    hidden_sizes = [64, 96, 128]
+    hidden_sizes = [96]
     num_layers_list = [1, 2]
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -269,7 +268,7 @@ if __name__ == '__main__':
                     optimizer = torch.optim.SGD(model.parameters(), lr=lr)
                     criterion = nn.NLLLoss()
                     print(f'Model has {count_parameters(model)} parameters')
-                    num_epochs = 4 # Originally using iters like in the example code. Will change to epochs
+                    num_epochs = 100 # Originally using iters like in the example code. Will change to epochs
                     n_iters = num_epochs * n_lines
                     h = torch.zeros(num_layers, batch_size, hidden_size)
                     c = torch.zeros(num_layers, batch_size, hidden_size)
@@ -289,39 +288,13 @@ if __name__ == '__main__':
                         for sample in train_loader:
                             category = sample['category'][0]
                             line = sample['line'][0]
-                            #print(f'category: {category}, line: {line}')
-                            #category = category[0]
-                            #line = line[0]
-                            #category = category[2:-2]
-                            #category, line = sample
-                        # rng.shuffle(all_categories)
-                        # for category in all_categories:
-                        #     print(f'Training category: {category}')
-                        #     rng.shuffle(train_categories[category])
-                        #     for line in train_categories[category]:
-                            #print(f'category: {category}, line: {line}')
-                            #print(f'type: {type(category)}, category: {str(category)[2:-2]}')
-                            #print(f'all_categories: {all_categories}')
                             category_tensor = torch.tensor([all_categories.index(category)], dtype=torch.long)
                             line_tensor = lineToTensor(line)
-
-                    #category, line, category_tensor, line_tensor = randomTrainingExample()
-
-                            #print(f'category: {category}, line: {line}')
                             optimizer.zero_grad()
-                            #model.zero_grad()
-                            #print(f'category_tensor.shape: {category_tensor.shape}')
-                            #print(f'category_tensor: {category_tensor}')
-                            #print(f'line_tensor.shape: {line_tensor.shape}')
-                            #print(f'line_tensor: {line_tensor}')
-                            #print(f'h.shape: {h.shape}')
-                            #print(f'c.shape: {c.shape}')
                             category_tensor = category_tensor.to(device)
                             line_tensor = line_tensor.to(device)
                             h = h.to(device)
                             c = c.to(device)
-                            # for i in range(len(line_tensor)):
-                            #     print(f'input shape: {line_tensor[i].shape}')
                             output, (h, c) = model(line_tensor, (h, c))
                             h = h.detach()
                             c = c.detach()
@@ -331,7 +304,6 @@ if __name__ == '__main__':
                             loss = criterion(output, category_tensor)
                             loss.backward()
                             optimizer.step()
-                            #output, loss = train(category_tensor, line_tensor)
                             running_loss += loss.item()
 
                             # Print iter number, loss, name and guess
@@ -365,8 +337,6 @@ if __name__ == '__main__':
                                 line_tensor = line_tensor.to(device)
                                 h = h.to(device)
                                 c = c.to(device)
-                                # for i in range(len(line_tensor)):
-                                #     print(f'input shape: {line_tensor[i].shape}')
                                 output, (h, c) = model(line_tensor, (h, c))
                                 val_loss = criterion(output, category_tensor)
                                 running_val_loss += val_loss.item()
