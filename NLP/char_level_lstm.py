@@ -30,6 +30,7 @@ class myLSTM(nn.Module):
         self.output_size = output_size
         self.LSTM = nn.LSTM(input_size, hidden_size, num_layers, dropout=dropout)
         self.dropout = nn.Dropout(p=dropout)
+        self.bn = nn.BatchNorm1d(hidden_size)
         self.fc = nn.Linear(hidden_size, output_size)
         self.softmax = nn.LogSoftmax(dim=1)
 
@@ -37,8 +38,9 @@ class myLSTM(nn.Module):
         L = len(input)
         h, c = hc
         output, (h,c) = self.LSTM(input, (h,c))
-        output = self.dropout(output)
-        output = self.fc(output.view(L, -1))
+        output = self.dropout(output.view(L, -1))
+        output = self.bn(output)
+        output = self.fc(output)
         output = self.softmax(output)
         return output[-1].view(1,-1), (h,c)
 
@@ -247,12 +249,12 @@ if __name__ == '__main__':
     print(f'n_categories: {n_categories}')
 
     lrs = [3e-2]
-    ps = [0.5, 0.7, 0.9]
+    ps = [0.2, 0.25, 0.3]
     # hidden_size<=256 and num_layers<=2 works well on name language classification
     # Increasing these numbers prevents the network from learning
     # In certain configurations, it seems to always guess the same language
     hidden_sizes = [96]
-    num_layers_list = [1, 2]
+    num_layers_list = [2]
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(f'device: {device}')
@@ -267,7 +269,7 @@ if __name__ == '__main__':
                     optimizer = torch.optim.SGD(model.parameters(), lr=lr)
                     criterion = nn.NLLLoss()
                     print(f'Model has {count_parameters(model)} parameters')
-                    num_epochs = 100
+                    num_epochs = 50
                     n_iters = num_epochs * n_lines
                     h = torch.zeros(num_layers, batch_size, hidden_size)
                     c = torch.zeros(num_layers, batch_size, hidden_size)
