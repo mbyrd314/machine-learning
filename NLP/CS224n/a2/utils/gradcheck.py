@@ -43,12 +43,6 @@ def gradcheck_naive(f, x, gradientText):
         numgrad = (fxh - fxnh) / 2 / h
 
         # Compare gradients
-        # print(f'x.shape: {x.shape}')
-        # print(f'fx.shape: {fx.shape}')
-        # print(f'grad.shape: {grad.shape}')
-        # print(f'numgrad.shape: {numgrad.shape}')
-        # print(f'ix: {ix}, grad[ix].shape: {grad[ix].shape}')
-        # print(f'numgrad: {numgrad}, grad[ix]: {grad[ix]}')
         reldiff = abs(numgrad - grad[ix]) / max(1, abs(numgrad), abs(grad[ix]))
         if reldiff > 1e-5:
             print("Gradient check failed for %s." % gradientText)
@@ -70,7 +64,7 @@ def grad_tests_softmax(skipgram, dummy_tokens, dummy_vectors, dataset):
     output_loss, output_gradCenterVecs, output_gradOutsideVectors = \
                 skipgram("c", 3, ["a", "b", "e", "d", "b", "c"],
                 dummy_tokens, dummy_vectors[:5,:], dummy_vectors[5:,:], dataset)
-    #print(f'output_loss: {output_loss}')
+                
     assert np.allclose(output_loss, 11.16610900153398), \
            "Your loss does not match expected loss."
     expected_gradCenterVecs = [[ 0.,          0.,          0.        ],

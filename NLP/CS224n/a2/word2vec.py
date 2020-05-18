@@ -58,45 +58,15 @@ def naiveSoftmaxLossAndGradient(
     """
 
     ### YOUR CODE HERE (~6-8 Lines)
-    # N, D = outsideVectors.shape
-    # print(f'Naive Softmax Loss: (N,D) = ({N},{D})')
-    # print(f'centerWordVec.shape: {centerWordVec.shape}')
     dot_prods = outsideVectors.dot(centerWordVec)
     y_hat = softmax(dot_prods)
-    loss = -np.log(y_hat)
+    loss = -np.log(y_hat)[outsideWordIdx]
     diff = y_hat
-    # print(f'Before diff: {diff}')
     diff[outsideWordIdx] -= 1 # y_hat-y
-    # print(f'After diff: {diff}')
-    # print(f'loss.shape: {loss.shape}')
-    #assert(loss.shape[0] == N)
-    loss = loss[outsideWordIdx]
-    #gradCenterVec = -outsideVectors[outsideWordIdx] + np.sum(outsideVectors, axis=0)
     gradCenterVec = diff.dot(outsideVectors)
-    # print(f'gradCenterVec.shape: {gradCenterVec.shape}')
-    # print(f'gradCenterVec: {gradCenterVec}')
-    # gradOutsideVecs = np.zeros(outsideVectors.shape)
-    # gradOutsideVecs += centerWordVec
-    # print(f'Before gradOutsideVecs: {gradOutsideVecs}')
-    # gradOutsideVecs *= diff.reshape(-1, 1)
-    # print(f'After gradOutsideVecs: {gradOutsideVecs}')
     diff = diff.reshape(-1, 1) # Making y_hat-y a column vector
     vc = centerWordVec.reshape(1, -1) # Making centerWordVec a row vector
-    # eps = 1e-4
-    # assert(np.sum(np.sum((diff.dot(vc)-gradOutsideVecs)))-eps)
     gradOutsideVecs = diff.dot(vc)
-    #gradOutsideVecs = np.ones(outsideVectors.T.shape)*diff
-    #y = np.zeros(outsideVectors.shape[0])
-    #y[outsideWordIdx] = 1
-    #print(f'gradOutsideVecs: {gradOutsideVecs}, y: {y}')
-    #gradOutsideVecs -= y
-    #print(f'gradOutsideVecs: {gradOutsideVecs}')
-    #gradOutsideVecs = gradOutsideVecs.T
-    #print(f'gradOutsideVecs: {gradOutsideVecs}')
-    assert(gradCenterVec.shape == centerWordVec.shape)
-    assert(outsideVectors.shape == gradOutsideVecs.shape)
-    assert(outsideVectors.shape[1] == centerWordVec.shape[0])
-    #assert(loss.shape[0] == N)
     ### Please use the provided softmax function (imported earlier in this file)
     ### This numerically stable implementation helps you avoid issues pertaining
     ### to integer overflow.
@@ -145,42 +115,17 @@ def negSamplingLossAndGradient(
     indices = [outsideWordIdx] + negSampleWordIndices
 
     ### YOUR CODE HERE (~10 Lines)
-    N, D = outsideVectors.shape
-    #print(f'Negative Sampling Loss: (N,D) = ({N},{D})')
-    #print(f'outsideVectors[indices].shape: {outsideVectors[indices].shape}')
-    #print(f'centerWordVec.shape: {centerWordVec.shape}')
     dot_prods = outsideVectors[indices].dot(centerWordVec)
-    #print(f'dot_prods: {dot_prods}')
-    dot_prods[1:] *= -1
-    #print(f'dot_prods: {dot_prods}')
-    ps = sigmoid(dot_prods)
+    dot_prods[1:] *= -1 # Negating the negative samples
+    ps = sigmoid(dot_prods) # Saving these to avoid repeated computation later
     dot_prods = np.log(ps)
-    #print(f'dot_prods.shape: {dot_prods.shape}')
-    #print(f'dot_prods.shape: {dot_prods.shape}')
-    #loss = dot_prods[0]-np.sum(dot_prods[1:])
     loss = -np.sum(dot_prods)
-    #print(f'loss.shape: {loss.shape}')
-    #loss = loss[outsideWordIdx]
-    #uo = outsideWordVectors[outsideWordIdx]
-    gradCenterVec = outsideVectors[indices[0]]*(ps[0]-1)
     gradOutsideVecs = np.zeros(outsideVectors.shape)
-    #print(f'gradOutsideVecs.shape: {gradOutsideVecs.shape}')
+    gradCenterVec = outsideVectors[indices[0]]*(ps[0]-1)
     gradOutsideVecs[indices[0]] += centerWordVec*(ps[0]-1)
-    #print(f'gradCenterVec.shape: {gradCenterVec.shape}')
-    for i, idx in enumerate(indices[1:]):
+    for i, idx in enumerate(indices[1:]): # I should probably go back and vectorize these to speed things up
         gradCenterVec -= outsideVectors[idx]*(ps[i+1]-1)
         gradOutsideVecs[idx] -= centerWordVec*(ps[i+1]-1)
-    #gradCenterVec -= np.sum(outsideVectors[indices[1:]].T.dot(sigmoid(-outsideVectors[indices[1:]].dot(centerWordVec))-1))
-    # gradOutsideVecs = np.zeros(outsideVectors.shape)
-    # #print(f'gradOutsideVecs.shape: {gradOutsideVecs.shape}')
-    # gradOutsideVecs[indices[0]] += centerWordVec*((sigmoid(outsideVectors[indices[0]].dot(centerWordVec))-1))
-    # for idx in indices[1:]:
-    #     gradOutsideVecs[idx] -= centerWordVec*(sigmoid(-outsideVectors[idx].dot(centerWordVec))-1)
-    #gradOutsideVecs[indices[1:]] -= centerWordVec.dot((sigmoid(-outsideVectors[indices[1:]].dot(centerWordVec))-1))
-    assert(gradCenterVec.shape == centerWordVec.shape)
-    assert(outsideVectors.shape == gradOutsideVecs.shape)
-    assert(outsideVectors.shape[1] == centerWordVec.shape[0])
-    #assert(loss.shape[0] == N)
     ### Please use your implementation of sigmoid in here.
 
     ### END YOUR CODE
@@ -232,27 +177,12 @@ def skipgram(currentCenterWord, windowSize, outsideWords, word2Ind,
     # (num words in vocab, word vector length) like in the initialized array
     curIdx = word2Ind[currentCenterWord]
     centerWordVec = centerWordVectors[curIdx]
-    # If there are no more than 2*windowSize outside words like it says, then windowSize
-    # doesn't matter. This will always iterate over all outside words
     for outsideWord in outsideWords:
         outsideWordIdx = word2Ind[outsideWord]
         newloss, newgradCenterVec, newgradOutsideVecs = word2vecLossAndGradient(centerWordVec, outsideWordIdx, outsideVectors, dataset)
         loss += newloss
         gradCenterVecs[curIdx] += newgradCenterVec
         gradOutsideVectors += newgradOutsideVecs
-    # for j in range(max(0, curIdx-windowSize), min(len(outsideVectors), curIdx+windowSize)):
-    #     if j != curIdx:
-    #         jloss, jgradCenterVec, jgradOutsideVecs = word2vecLossAndGradient(centerWordVec, j, outsideVectors, dataset)
-    #         loss += jloss
-    #         gradCenterVecs[curIdx] += jgradCenterVec
-    #         gradOutsideVectors += jgradOutsideVecs
-    # print(f'outsideVectors.shape: {outsideVectors.shape}')
-    # print(f'centerWordVec.shape: {centerWordVectors[j].shape}')
-    # print(f'gradCenterVecs.shape: {gradCenterVecs.shape}')
-    # print(f'gradOutsideVectors.shape: {gradOutsideVectors.shape}')
-    assert(gradCenterVecs.shape == centerWordVectors.shape)
-    assert(outsideVectors.shape == gradOutsideVectors.shape)
-    assert(outsideVectors.shape[1] == centerWordVectors[0].shape[0])
     ### END YOUR CODE
 
     return loss, gradCenterVecs, gradOutsideVectors
@@ -269,7 +199,6 @@ def word2vec_sgd_wrapper(word2vecModel, word2Ind, wordVectors, dataset,
     loss = 0.0
     grad = np.zeros(wordVectors.shape)
     N = wordVectors.shape[0]
-    #print(f'In wrapper: N={N}, grad.shape: {grad.shape}')
     centerWordVectors = wordVectors[:int(N/2),:]
     outsideVectors = wordVectors[int(N/2):,:]
     for i in range(batchsize):
@@ -280,7 +209,6 @@ def word2vec_sgd_wrapper(word2vecModel, word2Ind, wordVectors, dataset,
             centerWord, windowSize1, context, word2Ind, centerWordVectors,
             outsideVectors, dataset, word2vecLossAndGradient
         )
-        #print(f'In wrapper: gin.shape={gin.shape}, gout.shape={gout.shape}')
         loss += c / batchsize
         grad[:int(N/2), :] += gin / batchsize
         grad[int(N/2):, :] += gout / batchsize
