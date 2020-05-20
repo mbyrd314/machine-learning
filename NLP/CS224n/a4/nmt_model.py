@@ -174,32 +174,16 @@ class NMT(nn.Module):
         ###         https://pytorch.org/docs/stable/torch.html#torch.cat
         ###     Tensor Permute:
         ###         https://pytorch.org/docs/stable/tensors.html#torch.Tensor.permute
-        #X = source_padded[self.model_embeddings.source]
-        #print(f'source_padded.shape: {source_padded.shape}')
-        #print(f'self.model_embeddings.shape: {self.model_embeddings.source.shape}')
         X = self.model_embeddings.source(source_padded)
-        #print(f'X.shape: {X.shape}')
         X_packed = pack_padded_sequence(X, source_lengths)
-        #print(f'X_packed.shape: {X_packed.shape}')
         enc_hiddens, (last_hidden, last_cell) = self.encoder(X_packed)
-        #print(f'enc_hidden.shape: {enc_hidden.shape}')
-        #(last_hidden, last_cell) = hc
-        #print(f'last_hidden.shape: {last_hidden.shape}')
         enc_hiddens, lens_unpacked = pad_packed_sequence(enc_hiddens)
-        #print(f'enc_hidden.shape: {enc_hidden.shape}')
-        #last_hidden = last_hidden.view(last_hidden.shape[1], -1)
         last_hidden = torch.cat((last_hidden[0], last_hidden[1]), dim=1)
         last_cell = torch.cat((last_cell[0], last_cell[1]), dim=1)
-        #print(f'last_hidden.shape: {last_hidden.shape}')
         init_decoder_hidden = self.h_projection(last_hidden)
         init_decoder_cell = self.c_projection(last_cell)
-        #print(f'init_decoder_hidden.shape: {init_decoder_hidden.shape}')
-        #print(f'enc_hiddens: {enc_hiddens}')
-        #print(f'len(enc_hiddens): {len(enc_hiddens)}')
-        enc_hiddens = enc_hiddens.permute(1,0,2)
-        #print(f'enc_hiddens.shape: {enc_hiddens.shape}')
+        enc_hiddens = enc_hiddens.permute(1,0,2) # To make enc_hiddens have the shape (b, src_len, 2*h)
         dec_init_state = (init_decoder_hidden, init_decoder_cell)
-        #pri    nt(f'dec_init_state: {dec_init_state}')
 
 
         ### END YOUR CODE
