@@ -94,6 +94,7 @@ if __name__ == '__main__':
         speeds = [float(x) for x in f.readlines()]
     mean_speed = np.mean(speeds)
     print(f'Mean speed: {mean_speed}')
+    torch.manual_seed(0) # To make sure that the train/validation split is always the same
     train_set, validation_set = torch.utils.data.random_split(car_speed_dataset, [int(.8*n), n-int(.8*n)])
     #train_set = car_speed_dataset
     print(f'Training set length: {len(train_set)}')
@@ -110,8 +111,10 @@ if __name__ == '__main__':
     train_losses = {}
     val_losses = {}
     # Training loss of 3.173 after 50 epochs of ResNet18
+    # Best Validation loss is 3.365 after 45 epochs of ResNet50
+    # The specific hyperparameters have been edited several times in this file
     lrs = [0.00003, 0.0001, 0.0003]
-    ps = [0.7] # Leftover from when I had dropout layers. I might put them back
+    ps = [0.3] # Leftover from when I had dropout layers. I might put them back
 
     num_epochs = 3 # This is arbitrary
     for lr in lrs:
